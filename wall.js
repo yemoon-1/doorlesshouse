@@ -330,72 +330,29 @@
       ? `<img src="wall_poster_image/${encodeURIComponent(filename)}" alt="${esc(concert.title)}">`
       : svgPlaceholder(idx);
 
-    /* Poster image links to url when available */
-    const imgHtml = concert.url
-      ? `<a href="${esc(concert.url)}" target="_blank" rel="noopener noreferrer">${imgContent}</a>`
-      : imgContent;
-
     const catHtml = concert.category
       ? `<span class="cat-btn">${esc(concert.category)}</span>`
       : '';
 
-    return `<div class="concert-card">
-      <div class="concert-img">${imgHtml}</div>
+    const titleHtml = concert.url
+      ? `<a class="concert-title-link" href="${esc(concert.url)}" target="_blank" rel="noopener noreferrer">${esc(concert.title)}</a>`
+      : esc(concert.title);
+
+    return `<article class="concert-card" data-card-index="${idx}">
+      <div class="concert-img">${imgContent}</div>
       <div class="concert-body">
         ${catHtml}
         <p class="concert-date-tag">${esc(concert.date)}</p>
-        <h3 class="concert-name">${esc(concert.title)}</h3>
+        <h3 class="concert-name">${titleHtml}</h3>
         <p class="concert-location">${esc(concert.venue)}</p>
       </div>
-    </div>`;
+    </article>`;
   }
-
-  /* ── Column layout + parallax mount ── */
-
-  /*
-   * 5 columns with different widths, starting offsets, and scroll factors.
-   * factor > 0 → column rises faster than page scroll (closer feel)
-   * factor < 0 → column rises slower than page scroll (farther feel)
-   * Concerts are sorted newest-first and distributed round-robin across
-   * columns, so the top row always shows the 5 most recent shows.
-   */
-  const COL_CONFIGS = [
-    { width: 21, factor: -0.05, marginTop:  0  },
-    { width: 17, factor:  0.07, marginTop: 55  },
-    { width: 22, factor: -0.03, marginTop: 18  },
-    { width: 18, factor:  0.09, marginTop: 70  },
-    { width: 14, factor: -0.06, marginTop: 32  },
-  ];
 
   const grid = document.getElementById('concertsGrid');
   if (!grid) return;
 
-  /* Newest-first order */
   const sorted = [...concerts].reverse();
-
-  /* Build column elements */
-  const colEls = COL_CONFIGS.map(cfg => {
-    const col = document.createElement('div');
-    col.className = 'concerts-col';
-    col.style.width      = cfg.width + '%';
-    col.style.marginTop  = cfg.marginTop + 'px';
-    col.dataset.factor   = cfg.factor;
-    grid.appendChild(col);
-    return col;
-  });
-
-  /* Distribute cards round-robin, newest → col 0 */
-  sorted.forEach((concert, i) => {
-    colEls[i % colEls.length].insertAdjacentHTML('beforeend', renderConcert(concert, i));
-  });
-
-  /* Parallax on scroll */
-  window.addEventListener('scroll', () => {
-    const y = window.scrollY;
-    colEls.forEach(col => {
-      const shift = y * parseFloat(col.dataset.factor);
-      col.style.transform = `translateY(${shift}px)`;
-    });
-  }, { passive: true });
+  grid.innerHTML = sorted.map((concert, i) => renderConcert(concert, i)).join('');
 
 }());
